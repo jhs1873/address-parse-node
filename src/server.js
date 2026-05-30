@@ -22,6 +22,50 @@ function readInput(req) {
   return req.body?.text ?? req.body?.address ?? req.body?.raw ?? '';
 }
 
+function readSender(req) {
+  if (typeof req.body !== 'object' || req.body === null) {
+    return '';
+  }
+
+  return req.body.phone
+    ?? req.body.mobile
+    ?? req.body.phoneNumber
+    ?? req.body.sender
+    ?? req.body.senderPhone
+    ?? '';
+}
+
+function extractPhone(value) {
+  if (typeof value !== 'string') {
+    return {};
+  }
+
+  const match = value.match(/(?:\+?86[-\s]?)?1[3-9]\d{9}/);
+
+  if (!match) {
+    return {};
+  }
+
+  const raw = match[0];
+  const phone = raw.replace(/^\+?86[-\s]?/, '');
+
+  return {
+    phone,
+    phonenum: raw,
+    countryCode: raw.startsWith('+86') || raw.startsWith('86') ? '86' : ''
+  };
+}
+
+function formatLocation(parsed) {
+  return parsed.county || parsed.city || parsed.province || '';
+}
+
+function removeEmptyValues(value) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== '' && item !== undefined && item !== null)
+  );
+}
+
 function smartParse(input, includeStreet) {
   if (!includeStreet) {
     return smart(input);
@@ -57,11 +101,21 @@ function parseAddress(req, res) {
 
   const includeStreet = req.body?.includeStreet !== false;
   const parsed = smartParse(input, includeStreet);
+  console.log('[ parsed ] >', parsed)
+  
+  const senderPhone = extractPhone(readSender(req));
+  const inputPhone = extractPhone(input);
+  const phoneInfo = Object.keys(senderPhone).length > 0 ? senderPhone : inputPhone;
+  const data = {
+    ...parsed,
+    ...phoneInfo,
+    location: formatLocation(parsed),
+    raw: input,
+    person: parsed.name,
+    detail: parsed.street+parsed.address+parsed.zipCode
+  };
 
-  return res.json({
-    success: true,
-    data: parsed
-  });
+  return res.json(removeEmptyValues(data));
 }
 
 app.get('/health', (_req, res) => {
