@@ -1,0 +1,20 @@
+{
+  "name": "address-parse-api",
+  "version": "1.0.0",
+  "description": "HTTP API wrapper for address-smart-parse.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "address-smart-parse": "^3.0.3",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
