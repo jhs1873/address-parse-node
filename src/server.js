@@ -60,6 +60,12 @@ function formatLocation(parsed) {
   return parsed.county || parsed.city || parsed.province || '';
 }
 
+function formatDetail(parsed) {
+  return [parsed.street, parsed.address, parsed.zipCode]
+    .filter((item) => item !== '' && item !== undefined && item !== null)
+    .join('');
+}
+
 function removeEmptyValues(value) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== '' && item !== undefined && item !== null)
@@ -101,8 +107,7 @@ function parseAddress(req, res) {
 
   const includeStreet = req.body?.includeStreet !== false;
   const parsed = smartParse(input, includeStreet);
-  console.log('[ parsed ] >', parsed)
-  
+    
   const senderPhone = extractPhone(readSender(req));
   const inputPhone = extractPhone(input);
   const phoneInfo = Object.keys(senderPhone).length > 0 ? senderPhone : inputPhone;
@@ -112,7 +117,7 @@ function parseAddress(req, res) {
     location: formatLocation(parsed),
     raw: input,
     person: parsed.name,
-    detail: parsed.street+parsed.address+parsed.zipCode
+    detail: formatDetail(parsed)
   };
 
   return res.json(removeEmptyValues(data));
